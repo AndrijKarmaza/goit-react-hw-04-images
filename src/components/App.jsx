@@ -44,12 +44,14 @@ export class App extends Component {
 
   formSubmit = value => {
     this.state.inputValue !== value
-      ? this.setState({ searchData: [] })
+      ? this.setState({ searchData: [], page: 1 })
       : Notify.failure(
           'You are already searching for images in this category.'
         );
 
-    this.setState({ inputValue: value.trim() });
+    this.setState({
+      inputValue: value.trim(),
+    });
   };
 
   buttonLoadMore = () => {
