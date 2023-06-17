@@ -62,9 +62,10 @@ export const App = () => {
       <Searchbar formSubmit={formSubmit} />
       {loading && Loading.standard('Loading...')}
       <ImageGallery images={searchData} />
-      {totalImages > 0 && loadedImage <= totalImages && (
-        <Button buttonLoadMore={buttonLoadMore} />
-      )}
+      {totalImages > 0 &&
+        loadedImage <= totalImages &&
+        inputValue !== '' &&
+        !loading && <Button buttonLoadMore={buttonLoadMore} />}
       {error &&
         Notify.failure(
           'Oops! Something went wrong. Please try reloading the page'
