@@ -1,82 +1,74 @@
 import { Button } from './Button/Button';
 import { ImageGallery } from './ImageGallery/ImageGallery';
-import { Component } from 'react';
 import { fetchImages } from '../services/api';
 import { Searchbar } from './Searchbar/Searchbar';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import { Loading } from 'notiflix/build/notiflix-loading-aio';
+import { useState, useEffect } from 'react';
 
-export class App extends Component {
-  state = {
-    inputValue: '',
-    searchData: [],
-    page: 1,
-    loading: false,
-    totalImages: 0,
-    error: false,
-  };
+export const App = () => {
+  const [inputValue, setInputValue] = useState('');
+  const [searchData, setSearchData] = useState([]);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [totalImages, setTotalImages] = useState(0);
+  const [error, setError] = useState(false);
 
-  async componentDidUpdate(_, prevState) {
-    const { inputValue, page } = this.state;
-    if (
-      prevState.inputValue !== this.state.inputValue ||
-      prevState.page !== this.state.page
-    ) {
-      try {
-        this.setState({ loading: true });
-        const fetchedImages = await fetchImages(inputValue, page);
-        fetchedImages.totalHits === 0
-          ? Notify.failure(
-              'Sorry, there are no images matching your search query. Please try again.'
-            )
-          : this.setState(prevState => ({
-              searchData: [...prevState.searchData, ...fetchedImages.hits],
-              totalImages: fetchedImages.totalHits,
-            }));
-      } catch (error) {
-        this.setState({ error: true });
-      } finally {
-        this.setState({ loading: false });
-        Loading.remove();
+  const loadedImage = page * 12;
+
+  useEffect(() => {
+    async function getImages() {
+      if (inputValue !== '' || page !== 1) {
+        try {
+          setLoading(true);
+          const fetchedImages = await fetchImages(inputValue, page);
+          fetchedImages.totalHits === 0
+            ? Notify.failure(
+                'Sorry, there are no images matching your search query. Please try again.'
+              )
+            : setSearchData(searchData => [
+                ...searchData,
+                ...fetchedImages.hits,
+              ]);
+          setTotalImages(fetchedImages.totalHits);
+        } catch (error) {
+          setError(true);
+        } finally {
+          setLoading(false);
+          Loading.remove();
+        }
       }
     }
-  }
+    getImages();
+  }, [inputValue, page]);
 
-  formSubmit = value => {
-    this.state.inputValue !== value
-      ? this.setState({ searchData: [], page: 1 })
-      : Notify.failure(
-          'You are already searching for images in this category.'
-        );
+  const formSubmit = value => {
+    if (inputValue !== value) {
+      setSearchData([]);
+      setPage(1);
+    } else {
+      Notify.failure('You are already searching for images in this category.');
+    }
 
-    this.setState({
-      inputValue: value.trim(),
-    });
+    setInputValue(value.trim());
   };
 
-  buttonLoadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const buttonLoadMore = () => {
+    setPage(page => page + 1);
   };
 
-  render() {
-    const { searchData, totalImages, page, loading, error } = this.state;
-    const loadedImage = page * 12;
-
-    return (
-      <>
-        <Searchbar formSubmit={this.formSubmit} />
-        {loading && Loading.standard('Loading...')}
-        <ImageGallery images={searchData} />
-        {totalImages > 0 && loadedImage <= totalImages && (
-          <Button buttonLoadMore={this.buttonLoadMore} />
+  return (
+    <>
+      <Searchbar formSubmit={formSubmit} />
+      {loading && Loading.standard('Loading...')}
+      <ImageGallery images={searchData} />
+      {totalImages > 0 && loadedImage <= totalImages && (
+        <Button buttonLoadMore={buttonLoadMore} />
+      )}
+      {error &&
+        Notify.failure(
+          'Oops! Something went wrong. Please try reloading the page'
         )}
-        {error &&
-          Notify.failure(
-            'Oops! Something went wrong. Please try reloading the page'
-          )}
-      </>
-    );
-  }
-}
+    </>
+  );
+};
