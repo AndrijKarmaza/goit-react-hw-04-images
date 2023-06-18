@@ -18,7 +18,9 @@ export const App = () => {
 
   useEffect(() => {
     async function getImages() {
-      if (inputValue !== '' || page !== 1) {
+      if (inputValue === '') {
+        return;
+      } else {
         try {
           setLoading(true);
           const fetchedImages = await fetchImages(inputValue, page);
@@ -39,6 +41,7 @@ export const App = () => {
         }
       }
     }
+
     getImages();
   }, [inputValue, page]);
 
